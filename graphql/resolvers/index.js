@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 // Mongoose models
 const Event = require('../../models/event');
 const User = require('../../models/user');
+const Booking = require('../../models/booking');
 
 
 const events = async eventIds => {
@@ -16,6 +17,10 @@ const events = async eventIds => {
   } catch (err) {
     throw err;
   }
+}
+
+const singleEvent = async eventId => {
+  
 }
 
 const user = async userId => {
@@ -112,6 +117,37 @@ module.exports = {
       };
     } catch (err) {
       throw err;
+    }
+  },
+  bookings: async () => {
+    try {
+      const bookings = await Booking.find();
+      return bookings.map(booking => {
+        return {
+          ...booking._doc,
+          _id: booking.id,
+          createdAt: new Date(booking._doc.createdAt).toISOString(),
+          updatedAt: new Date(booking._doc.updatedAt).toISOString(),
+        };
+      })
+    }catch (err) {
+      throw err;
+    }
+  },
+  bookEvent: async args => {
+    const event = await Event.findOne({ _id: args.eventId });
+
+    const booking = new Booking({
+      user: '5c4f49d4d62acd168ade387e',
+      event
+    });
+
+    const result = await booking.save();
+    return {
+      ...result._doc,
+      _id: result.id,
+      createdAt: new Date(result._doc.createdAt).toISOString(),
+      updatedAt: new Date(result._doc.updatedAt).toISOString(),
     }
   }
 }
