@@ -11,9 +11,9 @@ const mainNavigation = props => {
       </div>
       <nav className="main-navigation__items">
         <ul>
-          <li><NavLink to="/auth">Login</NavLink></li>
+          {props.auth === null ? <li><NavLink to="/auth">Login</NavLink></li> : <li><NavLink to="/logout">Logout</NavLink></li>}
           <li><NavLink to="/events">Events</NavLink></li>
-          <li><NavLink to="/bookings">Bookings</NavLink></li>
+          {props.auth !== null ? <li><NavLink to="/bookings">Bookings</NavLink></li> : null}
         </ul>
       </nav>
     </header>
