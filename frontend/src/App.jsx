@@ -28,16 +28,16 @@ class App extends Component {
   render() {
     return (
       <BrowserRouter>
-        <AuthContext.Provider value={{ userId: null, token: null, tokenExp: null, login: this.login, logout: this.logout }}>
-          <MainNavigation auth={this.state.token}/>
+        <AuthContext.Provider value={{ userId: this.state.userId, token: this.state.token, tokenExp: this.state.tokenExp, login: this.login, logout: this.logout }}>
+          <MainNavigation auth={this.state.token ? true : false}/>
           <main className="main-content">
             <Switch>
-              {this.state.token === null ? <Redirect from="/" to="/auth" exact /> : null}
-              {this.state.token !== null ? <Redirect from="/" to="/events" exact /> : null}
-              {this.state.token !== null ? <Redirect from="/auth" to="/events" exact /> : null}
-              {this.state.token === null ? <Route path="/auth" component={AuthPage} /> : null}
+              {this.state.token ? <Redirect from="/" to="/events" exact /> : null}
+              {this.state.token ? <Redirect from="/auth" to="/events" exact /> : null}
+              {!this.state.token ? <Route path="/auth" component={AuthPage} /> : null}
               <Route path="/events" component={EventsPage} />
-              {this.state.token !== null ? <Route path="/bookings" component={BookingsPage} /> : null}
+              {this.state.token ? <Route path="/bookings" component={BookingsPage} /> : null}
+              {!this.state.token ? <Redirect to="/auth" exact /> : null}
             </Switch>
           </main>
         </AuthContext.Provider>
