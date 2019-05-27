@@ -25,9 +25,14 @@ class EventsPage extends Component {
   }
 
   static contextType = authContext;
+  static isActive = true;
 
   componentDidMount() {
     this.fetchEvents();
+  }
+
+  componentWillUnmount() {
+    this.isActive = false;
   }
 
   fetchEvents = () => {
@@ -66,9 +71,15 @@ class EventsPage extends Component {
         return res.json();
       })
       .then((data) => {
-        this.setState({ events: data.data.events, loading: false });
+        if (this.isActive) {
+          this.setState({ events: data.data.events, loading: false });
+        }
       })
-      .catch((error) => this.setState({ loading: false }));
+      .catch((error) => {
+        if (this.isActive) {
+          this.setState({ loading: false });
+        }
+      });
   };
 
   startCreateEvent = () => {
@@ -154,8 +165,6 @@ class EventsPage extends Component {
   };
 
   handleViewDetail = (eventId) => {
-    console.log('detail view ran');
-    console.log(eventId);
     this.setState((prevState) => {
       const selectedEvent = this.state.events.find(
         (event) => event._id === eventId
@@ -165,7 +174,47 @@ class EventsPage extends Component {
     });
   };
 
-  handleBookEvent = () => {};
+  /**
+   * Handles the logic to book an event from an auth user
+   */
+  handleBookEvent = () => {
+    if (!this.context.token) {
+      this.setState({ selectedEvent: null });
+      return;
+    }
+
+    const requestBody = {
+      query: `
+            mutation {
+                bookEvent(eventId: "${this.state.selectedEvent._id}") {
+                    _id
+                    createdAt
+                    updatedAt
+                }
+            }
+          `
+    };
+
+    fetch('http://localhost:5000/graphql', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.context.token}`
+      }
+    })
+      .then((res) => {
+        if (res.status !== 200 && res.status !== 201) {
+          throw new Error(res.errors);
+        }
+        return res.json();
+      })
+      .then((res) => {
+        console.log(res.data);
+        this.setState({ selectedEvent: null });
+      })
+      .catch((err) => console.log(err));
+  };
 
   render() {
     return (
@@ -179,6 +228,7 @@ class EventsPage extends Component {
               canSave={true}
               onCancel={this.modalCancelHandler}
               onSave={this.modalConfirmHandler}
+              confirmText="Save"
             >
               <form>
                 <div className="form-control">
@@ -212,9 +262,10 @@ class EventsPage extends Component {
             <Modal
               title={this.state.selectedEvent.title}
               canCancel
-              canSave
+              canSave={this.context.token ? true : false}
               onCancel={this.modalCancelHandler}
               onSave={this.handleBookEvent}
+              confirmText="Book"
             >
               <h2>
                 ${this.state.selectedEvent.price} -{' '}
