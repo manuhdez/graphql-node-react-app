@@ -8,6 +8,7 @@
   padding: 0 1rem;
   display: flex;
   align-items: center;
+  z-index: 999;
 }
 
 .main-navigation__logo h1 {
