@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import AuthContext from '../context/auth-context';
 import Spinner from '../components/spinner/spinner';
+import BookingsList from '../components/bookings/bookingList/bookingList';
 
 class BookingsPage extends Component {
   state = {
@@ -9,9 +10,15 @@ class BookingsPage extends Component {
   };
 
   static contextType = AuthContext;
+  static isActive = false;
 
   componentDidMount() {
     this.fetchBookings();
+    this.isActive = true;
+  }
+
+  componentWillUnmount() {
+    this.isActive = false;
   }
 
   fetchBookings = () => {
@@ -59,6 +66,49 @@ class BookingsPage extends Component {
       .catch((error) => this.setState({ loading: false }));
   };
 
+  handleCancelBooking = (bookingId) => {
+    this.setState({ loading: true });
+
+    const requestBody = {
+      query: `
+        mutation {
+          cancelBooking(bookingId: "${bookingId}") {
+            _id
+            title
+          }
+        }
+      `
+    };
+
+    fetch('http://localhost:5000/graphql', {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.context.token}`
+      }
+    })
+      .then((res) => {
+        if (res.status !== 200 && res.status !== 201) {
+          throw new Error(res.errors);
+        }
+        return res.json();
+      })
+      .then((res) => {
+        if (this.isActive) {
+          const updatedBookingsList = this.state.bookings.filter(
+            (booking) => booking._id !== bookingId
+          );
+          this.setState({ bookings: updatedBookingsList, loading: false });
+        }
+      })
+      .catch((error) => {
+        if (this.isActive) {
+          this.setState({ loading: false });
+        }
+      });
+  };
+
   render() {
     return (
       <>
@@ -67,13 +117,10 @@ class BookingsPage extends Component {
         ) : (
           <React.Fragment>
             <h1>Bookings page</h1>
-            <ul>
-              {this.state.bookings
-                ? this.state.bookings.map((booking) => (
-                    <li key={booking._id}>{booking.event.title}</li>
-                  ))
-                : null}
-            </ul>
+            <BookingsList
+              bookings={this.state.bookings}
+              onCancelBooking={this.handleCancelBooking}
+            />
           </React.Fragment>
         )}
       </>
