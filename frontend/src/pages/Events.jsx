@@ -25,10 +25,11 @@ class EventsPage extends Component {
   }
 
   static contextType = authContext;
-  static isActive = true;
+  static isActive = false;
 
   componentDidMount() {
     this.fetchEvents();
+    this.isActive = true;
   }
 
   componentWillUnmount() {
@@ -71,6 +72,7 @@ class EventsPage extends Component {
         return res.json();
       })
       .then((data) => {
+        console.log('la respuesta de eventos llego con exito');
         if (this.isActive) {
           this.setState({ events: data.data.events, loading: false });
         }
